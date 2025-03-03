@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Live Sign Language Detection</title>
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils"></script>
     <style>
         body { text-align: center; font-family: Arial, sans-serif; }
         video, canvas { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); }
@@ -13,7 +13,7 @@
 </head>
 <body>
     <h1>Live Sign Language Detection</h1>
-    <video id="video" autoplay playsinline></video>
+    <video id="video" autoplay playsinline muted></video>
     <canvas id="canvas"></canvas>
 
     <script>
@@ -32,7 +32,7 @@
         }
 
         // تحميل MediaPipe Hands
-        const hands = new Hands({
+        const hands = new window.Hands({
             locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
         });
         hands.setOptions({
@@ -64,12 +64,11 @@
         function drawResults(results) {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            if (!results.multiHandLandmarks) return;
 
-            if (results.multiHandLandmarks) {
-                for (const landmarks of results.multiHandLandmarks) {
-                    drawConnectors(ctx, landmarks, HAND_CONNECTIONS, { color: "#00FF00", lineWidth: 2 });
-                    drawLandmarks(ctx, landmarks, { color: "#FF0000", lineWidth: 1 });
-                }
+            for (const landmarks of results.multiHandLandmarks) {
+                drawConnectors(ctx, landmarks, HAND_CONNECTIONS, { color: "#00FF00", lineWidth: 2 });
+                drawLandmarks(ctx, landmarks, { color: "#FF0000", lineWidth: 1 });
             }
         }
     </script>
