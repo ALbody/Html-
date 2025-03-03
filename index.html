@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Sign Language Detection</title>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
+    <style>
+        body { text-align: center; font-family: Arial, sans-serif; }
+        video, canvas { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); }
+    </style>
+</head>
+<body>
+    <h1>Live Sign Language Detection</h1>
+    <video id="video" autoplay playsinline></video>
+    <canvas id="canvas"></canvas>
+
+    <script>
+        // الحصول على الفيديو والعناصر المطلوبة
+        const video = document.getElementById("video");
+        const canvas = document.getElementById("canvas");
+        const ctx = canvas.getContext("2d");
+
+        // إعداد الكاميرا
+        async function setupCamera() {
+            const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+            video.srcObject = stream;
+            return new Promise((resolve) => {
+                video.onloadedmetadata = () => resolve(video);
+            });
+        }
+
+        // تحميل MediaPipe Hands
+        const hands = new Hands({
+            locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
+        });
+        hands.setOptions({
+            maxNumHands: 2,
+            minDetectionConfidence: 0.5,
+            minTrackingConfidence: 0.5
+        });
+        hands.onResults(drawResults);
+
+        // تشغيل الكاميرا والبدء في تحليل اليد
+        setupCamera().then((video) => {
+            video.play();
+            detectHands();
+        });
+
+        // تحليل الفيديو واستخراج بيانات اليد
+        async function detectHands() {
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+
+            async function processFrame() {
+                await hands.send({ image: video });
+                requestAnimationFrame(processFrame);
+            }
+            processFrame();
+        }
+
+        // رسم نقاط اليد على الفيديو
+        function drawResults(results) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            if (results.multiHandLandmarks) {
+                for (const landmarks of results.multiHandLandmarks) {
+                    drawConnectors(ctx, landmarks, HAND_CONNECTIONS, { color: "#00FF00", lineWidth: 2 });
+                    drawLandmarks(ctx, landmarks, { color: "#FF0000", lineWidth: 1 });
+                }
+            }
+        }
+    </script>
+</body>
+</html>
